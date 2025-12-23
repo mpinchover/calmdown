@@ -1,13 +1,12 @@
-import { ResizeMode, Video } from "expo-av";
 import React, { useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
   StatusBar,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
+import Card from "./components/card";
 
 const fakeData = [
   {
@@ -22,36 +21,21 @@ const fakeData = [
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-const Card = ({ index, url, isActive }) => {
-  return (
-    <View style={styles.card}>
-      <Video
-        source={{ uri: url }}
-        style={StyleSheet.absoluteFill}
-        resizeMode={ResizeMode.COVER}
-        isLooping
-        shouldPlay={isActive}
-        isMuted={!isActive}
-        // Optional: keeps playback going when switching cards quickly
-        // You can also set useNativeControls={false} (default)
-      />
-      <View style={styles.overlay}>
-        <Text style={styles.text}>Card #{index + 1}</Text>
-      </View>
-    </View>
-  );
-};
-
 export default function MainFeed() {
   const listRef = useRef(null);
   const maxIndex = useMemo(() => fakeData.length - 1, []);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
 
   const currentIndexRef = useRef(0);
   const dragStartOffsetRef = useRef(0);
   const snappingToIndexRef = useRef(null); // when we trigger an animated snap
 
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
+
+  const toggleMute = () => {
+    setIsMuted((prev) => !prev);
+  };
 
   const scrollToIndexAnimated = (index) => {
     const clamped = clamp(index, 0, maxIndex);
@@ -92,9 +76,15 @@ export default function MainFeed() {
       <FlatList
         ref={listRef}
         data={fakeData}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         renderItem={({ item, index }) => (
-          <Card isActive={index === activeIndex} index={index} url={item.url} />
+          <Card
+            isMuted={isMuted}
+            toggleMute={toggleMute}
+            isActive={index === activeIndex}
+            index={index}
+            url={item.url}
+          />
         )}
         showsVerticalScrollIndicator={false}
         bounces={false}
