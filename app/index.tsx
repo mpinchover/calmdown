@@ -1,4 +1,5 @@
-import React, { useMemo, useRef } from "react";
+import { ResizeMode, Video } from "expo-av";
+import React, { useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -8,13 +9,35 @@ import {
   View,
 } from "react-native";
 
-const fakeData = Array.from({ length: 10 }, (_, i) => ({ id: String(i) }));
+const fakeData = [
+  {
+    id: 1,
+    url: "https://storage.googleapis.com/voyager-feed-public/videos/6440ada6-6d9f-48b9-b2d1-458dd9aa7d60",
+  },
+  {
+    id: 2,
+    url: "https://storage.googleapis.com/voyager-feed-public/videos/4f00790b-b906-4875-9153-4c328d774e57",
+  },
+];
+
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-const Card = ({ index }) => {
+const Card = ({ index, url, isActive }) => {
   return (
     <View style={styles.card}>
-      <Text style={styles.text}>Card #{index + 1}</Text>
+      <Video
+        source={{ uri: url }}
+        style={StyleSheet.absoluteFill}
+        resizeMode={ResizeMode.COVER}
+        isLooping
+        shouldPlay={isActive}
+        isMuted={!isActive}
+        // Optional: keeps playback going when switching cards quickly
+        // You can also set useNativeControls={false} (default)
+      />
+      <View style={styles.overlay}>
+        <Text style={styles.text}>Card #{index + 1}</Text>
+      </View>
     </View>
   );
 };
@@ -22,6 +45,7 @@ const Card = ({ index }) => {
 export default function MainFeed() {
   const listRef = useRef(null);
   const maxIndex = useMemo(() => fakeData.length - 1, []);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const currentIndexRef = useRef(0);
   const dragStartOffsetRef = useRef(0);
@@ -52,6 +76,16 @@ export default function MainFeed() {
     return current;
   };
 
+  // Consider an item "active" when >= 80% visible
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 80,
+  }).current;
+
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    const v = viewableItems?.find((x) => x.isViewable);
+    if (v?.index != null) setActiveIndex(v.index);
+  }).current;
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
@@ -59,7 +93,9 @@ export default function MainFeed() {
         ref={listRef}
         data={fakeData}
         keyExtractor={(item) => item.id}
-        renderItem={({ index }) => <Card index={index} />}
+        renderItem={({ item, index }) => (
+          <Card isActive={index === activeIndex} index={index} url={item.url} />
+        )}
         showsVerticalScrollIndicator={false}
         bounces={false}
         overScrollMode="never"
@@ -73,6 +109,7 @@ export default function MainFeed() {
           offset: SCREEN_HEIGHT * index,
           index,
         })}
+        onViewableItemsChanged={onViewableItemsChanged}
         onScrollBeginDrag={(e) => {
           dragStartOffsetRef.current = e.nativeEvent.contentOffset.y;
           snappingToIndexRef.current = null;
@@ -140,8 +177,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
-    borderColor: "red",
-    borderWidth: 1,
   },
   text: { color: "black", fontSize: 24, fontWeight: "600" },
+  overlay: {
+    position: "absolute",
+    left: 16,
+    bottom: 24,
+  },
 });
