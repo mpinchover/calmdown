@@ -1,6 +1,7 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
-
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { ResizeMode, Video } from "expo-av";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -15,7 +16,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const ICON_SIZE = 24;
 const GAP = 20;
 const PAD = 20;
-const EXTRA_COUNT = 3;
+const EXTRA_COUNT = 2;
 const BG = "rgba(0, 0, 0, 0.5)";
 
 const CardMenu = ({ isMuted, toggleMute }) => {
@@ -77,14 +78,18 @@ const CardMenu = ({ isMuted, toggleMute }) => {
         pointerEvents={open ? "auto" : "none"}
       >
         <View style={styles.middleInner}>
-          <Pressable onPress={() => {}} hitSlop={12}>
+          {/* <Pressable onPress={() => {}} hitSlop={12}>
             <Feather name="volume-x" size={ICON_SIZE} color="#d1d5db" />
+          </Pressable> */}
+          <Pressable onPress={() => {}} hitSlop={12}>
+            <Ionicons name="color-filter" size={ICON_SIZE} color="#d1d5db" />
           </Pressable>
           <Pressable onPress={() => {}} hitSlop={12}>
-            <Feather name="volume-x" size={ICON_SIZE} color="#d1d5db" />
-          </Pressable>
-          <Pressable onPress={() => {}} hitSlop={12}>
-            <Feather name="volume-x" size={ICON_SIZE} color="#d1d5db" />
+            <MaterialCommunityIcons
+              name="account"
+              size={ICON_SIZE}
+              color="#d1d5db"
+            />
           </Pressable>
         </View>
       </Animated.View>
