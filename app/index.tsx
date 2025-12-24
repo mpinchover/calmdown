@@ -33,12 +33,15 @@ const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
 
 export default function MainFeed() {
   const listRef = useRef(null);
-  const maxIndex = useMemo(() => fakeData.length - 1, []);
+  const maxIndex = useMemo(() => dataWithLoading.length - 1, []);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [lastRealIndex, setLastRealIndex] = useState(fakeData.length - 1);
   const [loadingIndex, setLoadingIndex] = useState(dataWithLoading.length - 1);
   const bounceBackLockRef = useRef(false);
+  const loadingTimeoutRef = useRef(null);
+  const isShowingLoadingRef = useRef(false);
+  const LOADING_STICK_MS = 300;
 
   const currentIndexRef = useRef(0);
   const dragStartOffsetRef = useRef(0);
@@ -75,44 +78,90 @@ export default function MainFeed() {
 
   // Consider an item "active" when >= 80% visible
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 80,
+    itemVisiblePercentThreshold: 10,
   }).current;
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    const v = viewableItems?.find((x) => x.isViewable);
-    if (!v) {
-      return;
-    }
+    console.log("ON VIEWABLE HAS CHANGED");
+    const loading = viewableItems?.find(
+      (x) => x.isViewable && x.item?.type === "loading"
+    );
 
-    if (v.item?.type === "loading") {
-      if (bounceBackLockRef.current) {
-        return;
-      }
+    if (loading) {
+      console.log("LOADING SCREEN DETECTED");
+
+      if (bounceBackLockRef.current) return;
 
       bounceBackLockRef.current = true;
-      // Start fetch here (or set state that triggers fetch)
-      // fetchMore();
+      isShowingLoadingRef.current = true;
 
-      requestAnimationFrame(() => {
+      // If already scheduled, don't schedule again
+      if (loadingTimeoutRef.current) return;
+
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.log("SCROLLING BACK AFTER DELAY");
+
         listRef.current?.scrollToIndex({
           index: lastRealIndex,
           animated: true,
           viewPosition: 0,
         });
-        // release lock shortly after
+
+        // cleanup
+        loadingTimeoutRef.current = null;
+        isShowingLoadingRef.current = false;
+
+        // unlock shortly after we start scrolling back
         setTimeout(() => {
           bounceBackLockRef.current = false;
         }, 250);
-      });
+      }, LOADING_STICK_MS);
 
       return;
     }
+
+    const v = viewableItems?.find((x) => x.isViewable);
+    if (!v) {
+      return;
+    }
+
+    console.log("V IS: ", v);
+
+    // if (v.item?.type === "loading") {
+    //   console.log("LOADING SCREEN");
+    //   if (bounceBackLockRef.current) {
+    //     return;
+    //   }
+
+    //   bounceBackLockRef.current = true;
+    //   // Start fetch here (or set state that triggers fetch)
+    //   // fetchMore();
+
+    //   requestAnimationFrame(() => {
+    //     console.log("SCROLLING BACK");
+    //     listRef.current?.scrollToIndex({
+    //       index: lastRealIndex,
+    //       animated: true,
+    //       viewPosition: 0,
+    //     });
+    //     // release lock shortly after
+    //     setTimeout(() => {
+    //       bounceBackLockRef.current = false;
+    //     }, 250);
+    //   });
+
+    //   return;
+    // }
 
     // Normal active card
     if (v.index != null && v.index <= lastRealIndex) {
       setActiveIndex(v.index);
     }
   }).current;
+
+  const viewabilityConfigCallbackPairs = useRef([
+    { viewabilityConfig, onViewableItemsChanged },
+  ]).current;
 
   const renderItem = ({ item, index }) => {
     if (item.type === "loading") {
@@ -150,6 +199,7 @@ export default function MainFeed() {
         snapToAlignment="start"
         disableIntervalMomentum
         scrollEventThrottle={16}
+        viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
         getItemLayout={(_, index) => {
           if (index === loadingIndex) {
             // Offset is full pages for all real items
@@ -165,12 +215,14 @@ export default function MainFeed() {
             index,
           };
         }}
-        onViewableItemsChanged={onViewableItemsChanged}
+        // onViewableItemsChanged={onViewableItemsChanged}
         onScrollBeginDrag={(e) => {
           dragStartOffsetRef.current = e.nativeEvent.contentOffset.y;
           snappingToIndexRef.current = null;
         }}
         onScrollEndDrag={(e) => {
+          if (isShowingLoadingRef.current) return;
+
           const endY = e.nativeEvent.contentOffset.y;
 
           // Pick a target using halfway rule, then clamp to +/-1 max
@@ -181,6 +233,7 @@ export default function MainFeed() {
           scrollToIndexAnimated(oneStepTarget);
         }}
         onMomentumScrollEnd={(e) => {
+          if (isShowingLoadingRef.current) return;
           const y = e.nativeEvent.contentOffset.y;
 
           // Where did RN actually land?
