@@ -5,6 +5,7 @@ import { ResizeMode, Video } from "expo-av";
 import React, { useEffect, useRef } from "react";
 import { Dimensions, Pressable, StyleSheet, View } from "react-native";
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
 const CardMenu = ({ isMuted, toggleMute }) => {
   return (
     <View style={styles.cardMenu}>

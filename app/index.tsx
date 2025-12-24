@@ -4,6 +4,7 @@ import {
   FlatList,
   StatusBar,
   StyleSheet,
+  Text,
   View,
 } from "react-native";
 import Card from "./components/card";
@@ -19,13 +20,25 @@ const fakeData = [
   },
 ];
 
+const dataWithLoading = [
+  ...fakeData,
+  {
+    id: "loading",
+    type: "loading",
+  },
+];
+
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
 
 export default function MainFeed() {
   const listRef = useRef(null);
   const maxIndex = useMemo(() => fakeData.length - 1, []);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [lastRealIndex, setLastRealIndex] = useState(fakeData.length - 1);
+  const [loadingIndex, setLoadingIndex] = useState(dataWithLoading.length - 1);
+  const bounceBackLockRef = useRef(false);
 
   const currentIndexRef = useRef(0);
   const dragStartOffsetRef = useRef(0);
@@ -67,25 +80,68 @@ export default function MainFeed() {
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     const v = viewableItems?.find((x) => x.isViewable);
-    if (v?.index != null) setActiveIndex(v.index);
+    if (!v) {
+      return;
+    }
+
+    if (v.item?.type === "loading") {
+      if (bounceBackLockRef.current) {
+        return;
+      }
+
+      bounceBackLockRef.current = true;
+      // Start fetch here (or set state that triggers fetch)
+      // fetchMore();
+
+      requestAnimationFrame(() => {
+        listRef.current?.scrollToIndex({
+          index: lastRealIndex,
+          animated: true,
+          viewPosition: 0,
+        });
+        // release lock shortly after
+        setTimeout(() => {
+          bounceBackLockRef.current = false;
+        }, 250);
+      });
+
+      return;
+    }
+
+    // Normal active card
+    if (v.index != null && v.index <= lastRealIndex) {
+      setActiveIndex(v.index);
+    }
   }).current;
+
+  const renderItem = ({ item, index }) => {
+    if (item.type === "loading") {
+      return (
+        <View style={[styles.loadingCard, { height: LOADING_HEIGHT }]}>
+          <Text style={styles.loadingText}>Loading…</Text>
+        </View>
+      );
+    }
+
+    return (
+      <Card
+        url={item.url}
+        isActive={index === activeIndex}
+        toggleMute={toggleMute}
+        isMuted={isMuted}
+        // pass isMuted/toggleMute too if you have them
+      />
+    );
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar hidden />
       <FlatList
         ref={listRef}
-        data={fakeData}
+        data={dataWithLoading}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item, index }) => (
-          <Card
-            isMuted={isMuted}
-            toggleMute={toggleMute}
-            isActive={index === activeIndex}
-            index={index}
-            url={item.url}
-          />
-        )}
+        renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         bounces={false}
         overScrollMode="never"
@@ -94,11 +150,21 @@ export default function MainFeed() {
         snapToAlignment="start"
         disableIntervalMomentum
         scrollEventThrottle={16}
-        getItemLayout={(_, index) => ({
-          length: SCREEN_HEIGHT,
-          offset: SCREEN_HEIGHT * index,
-          index,
-        })}
+        getItemLayout={(_, index) => {
+          if (index === loadingIndex) {
+            // Offset is full pages for all real items
+            return {
+              length: LOADING_HEIGHT,
+              offset: SCREEN_HEIGHT * fakeData.length,
+              index,
+            };
+          }
+          return {
+            length: SCREEN_HEIGHT,
+            offset: SCREEN_HEIGHT * index,
+            index,
+          };
+        }}
         onViewableItemsChanged={onViewableItemsChanged}
         onScrollBeginDrag={(e) => {
           dragStartOffsetRef.current = e.nativeEvent.contentOffset.y;
@@ -160,18 +226,18 @@ export default function MainFeed() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "white" },
-  card: {
-    height: SCREEN_HEIGHT,
+  container: { flex: 1, backgroundColor: "black" },
+  loadingCard: {
     width: "100%",
-    alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    alignItems: "center",
+    backgroundColor: "black",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.15)",
   },
-  text: { color: "black", fontSize: 24, fontWeight: "600" },
-  overlay: {
-    position: "absolute",
-    left: 16,
-    bottom: 24,
+  loadingText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
