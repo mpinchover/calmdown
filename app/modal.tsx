@@ -1,5 +1,7 @@
 // import { useAuth } from "@/app/context/authcontext";
 import { ThemedText } from "@/components/themed-text";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
 
@@ -39,6 +41,15 @@ export default function ModalScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Close button */}
+      <Pressable
+        onPress={() => router.back()}
+        hitSlop={12}
+        style={styles.closeButton}
+      >
+        <AntDesign name="close" size={24} color={GREY} />
+      </Pressable>
+
       <View style={styles.card}>
         <ThemedText type="title" style={styles.title}>
           {isLogin ? "Log in" : "Create account"}
@@ -172,6 +183,12 @@ const styles = StyleSheet.create({
 
   linkText: {
     color: GREY,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 24,
+    right: 24,
+    zIndex: 10,
   },
 
   // closeLink: {
