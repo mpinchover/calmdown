@@ -159,7 +159,7 @@ export default function MainFeed() {
         }, 250);
       }, LOADING_STICK_MS);
 
-      if (!pushedModalRef.current) {
+      if (!auth && !pushedModalRef.current) {
         pushedModalRef.current = true;
         router.push("/login-modal");
         pushedModalRef.current = false;
