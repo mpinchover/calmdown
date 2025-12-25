@@ -40,46 +40,56 @@ const fakeDataAfterLoading = [
   },
 ];
 
-const dataWithLoading = [
-  ...fakeData,
-  {
-    id: "loading",
-    type: "loading",
-  },
-];
-
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
 const ADVANCE_THRESHOLD = 0.2 * SCREEN_HEIGHT;
-const LOADING_STICK_MS = 300;
+const FAKE_API_MS = 3000; // ✅ fake “network call”
 const FADE_MS = 180;
+const SCROLL_BACK_MS = 300; // animation timing
 
-const LoginModal = () => {
-  return <View style={styles.loginModal} />;
-};
+const LoginModal = () => <View style={styles.loginModal} />;
 
 export default function MainFeed() {
-  // TODO - replace with firebase auth
-  const [auth, setAuth] = useState({ user: "123" });
+  // List data (grows after “fetch”)
+  const [items, setItems] = useState(fakeData);
+
+  // Derived indices/data
+  const dataWithLoading = useMemo(
+    () => [...items, { id: "loading", type: "loading" }],
+    [items]
+  );
+  const lastRealIndex = items.length - 1;
+  const loadingIndex = items.length;
+  const maxIndex = dataWithLoading.length - 1; // includes loading sentinel
+
+  // Refs to avoid stale closures (CRITICAL for viewability + timers)
   const listRef = useRef(null);
-  const maxIndex = useMemo(() => dataWithLoading.length - 1, []);
+  const lastRealIndexRef = useRef(lastRealIndex);
+  useEffect(() => {
+    lastRealIndexRef.current = lastRealIndex;
+  }, [lastRealIndex]);
+
+  // UI state
+  const [auth] = useState({ user: "123" }); // TODO replace with firebase auth
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const pushedModalRef = useRef(false);
-  const [lastRealIndex, setLastRealIndex] = useState(fakeData.length - 1);
-  const [loadingIndex, setLoadingIndex] = useState(dataWithLoading.length - 1);
-  const bounceBackLockRef = useRef(false);
-  const loadingTimeoutRef = useRef(null);
-  const isShowingLoadingRef = useRef(false);
   const [colorFilterOn, setColorFilterOn] = useState(false);
 
   const overlayOpacity = useRef(
     new Animated.Value(colorFilterOn ? 0.3 : 0)
   ).current;
 
+  // Snap logic refs
   const currentIndexRef = useRef(0);
   const dragStartOffsetRef = useRef(0);
-  const snappingToIndexRef = useRef(null); // when we trigger an animated snap
+  const snappingToIndexRef = useRef(null);
+
+  // Loading behavior refs
+  const pushedModalRef = useRef(false);
+  const bounceBackLockRef = useRef(false);
+  const isShowingLoadingRef = useRef(false);
+  const loadingTimeoutRef = useRef(null);
+  const hasLoadedMoreRef = useRef(false);
 
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
 
@@ -91,34 +101,7 @@ export default function MainFeed() {
     setColorFilterOn((prev) => !prev);
   }, []);
 
-  const scrollToIndexAnimated = (index) => {
-    const clamped = clamp(index, 0, maxIndex);
-    currentIndexRef.current = clamped;
-    snappingToIndexRef.current = clamped;
-
-    listRef.current?.scrollToOffset({
-      offset: clamped * SCREEN_HEIGHT,
-      animated: true,
-    });
-  };
-
-  const decideTargetFromDrag = (endOffsetY) => {
-    const startOffset = dragStartOffsetRef.current;
-    const delta = endOffsetY - startOffset; // >0 => swipe up
-
-    const current = currentIndexRef.current;
-
-    if (Math.abs(delta) >= ADVANCE_THRESHOLD) {
-      return delta > 0 ? current + 1 : current - 1;
-    }
-    return current;
-  };
-
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 30,
-  }).current;
-
-  // ✅ animate overlay whenever global filter changes
+  // Animate overlay whenever global filter changes
   useEffect(() => {
     overlayOpacity.stopAnimation();
     Animated.timing(overlayOpacity, {
@@ -128,50 +111,90 @@ export default function MainFeed() {
     }).start();
   }, [colorFilterOn, overlayOpacity]);
 
+  const scrollToIndexAnimated = useCallback(
+    (index) => {
+      const clamped = clamp(index, 0, maxIndex);
+      currentIndexRef.current = clamped;
+      snappingToIndexRef.current = clamped;
+
+      listRef.current?.scrollToOffset({
+        offset: clamped * SCREEN_HEIGHT,
+        animated: true,
+      });
+    },
+    [maxIndex]
+  );
+
+  const decideTargetFromDrag = useCallback((endOffsetY) => {
+    const startOffset = dragStartOffsetRef.current;
+    const delta = endOffsetY - startOffset; // >0 => swipe up
+    const current = currentIndexRef.current;
+
+    if (Math.abs(delta) >= ADVANCE_THRESHOLD) {
+      return delta > 0 ? current + 1 : current - 1;
+    }
+    return current;
+  }, []);
+
+  const viewabilityConfig = useRef({
+    // Lower-ish so the 30% loading item can still be “viewable”
+    itemVisiblePercentThreshold: 10,
+  }).current;
+
+  // ✅ Fake API + append + keep loading visible for 3 seconds, then snap back
+  const handleLoadingStateRef = useRef(null);
+  handleLoadingStateRef.current = () => {
+    if (bounceBackLockRef.current) return;
+
+    bounceBackLockRef.current = true;
+    isShowingLoadingRef.current = true;
+
+    const snapBackIndex = lastRealIndexRef.current;
+
+    // ---------- FAST SCROLL BACK (300ms) ----------
+    setTimeout(() => {
+      listRef.current?.scrollToIndex({
+        index: snapBackIndex,
+        animated: true,
+        viewPosition: 0,
+      });
+
+      isShowingLoadingRef.current = false;
+      bounceBackLockRef.current = false;
+    }, SCROLL_BACK_MS);
+
+    // ---------- FAKE API CALL (3000ms) ----------
+    if (!hasLoadedMoreRef.current) {
+      hasLoadedMoreRef.current = true;
+
+      setTimeout(() => {
+        setItems((prev) => [...prev, ...fakeDataAfterLoading]);
+      }, FAKE_API_MS);
+    }
+
+    // Optional auth gate (unchanged)
+    if (!auth && !pushedModalRef.current) {
+      pushedModalRef.current = true;
+      router.push("/login-modal");
+      pushedModalRef.current = false;
+    }
+  };
+
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    // Prefer detecting loading first (it can overlap with last full card)
     const loading = viewableItems?.find(
       (x) => x.isViewable && x.item?.type === "loading"
     );
-
     if (loading) {
-      if (bounceBackLockRef.current) return;
-
-      bounceBackLockRef.current = true;
-      isShowingLoadingRef.current = true;
-
-      // If already scheduled, don't schedule again
-      if (loadingTimeoutRef.current) return;
-
-      loadingTimeoutRef.current = setTimeout(() => {
-        listRef.current?.scrollToIndex({
-          index: lastRealIndex,
-          animated: true,
-          viewPosition: 0,
-        });
-
-        // cleanup
-        loadingTimeoutRef.current = null;
-        isShowingLoadingRef.current = false;
-
-        // unlock shortly after we start scrolling back
-        setTimeout(() => {
-          bounceBackLockRef.current = false;
-        }, 250);
-      }, LOADING_STICK_MS);
-
-      if (!auth && !pushedModalRef.current) {
-        pushedModalRef.current = true;
-        router.push("/login-modal");
-        pushedModalRef.current = false;
-      }
-
+      handleLoadingStateRef.current?.();
       return;
     }
 
     const v = viewableItems?.find((x) => x.isViewable);
     if (!v) return;
 
-    if (v.index != null && v.index <= lastRealIndex) {
+    // Use ref so newly appended items can become active
+    if (v.index != null && v.index <= lastRealIndexRef.current) {
       setActiveIndex(v.index);
     }
   }).current;
@@ -204,6 +227,13 @@ export default function MainFeed() {
     [activeIndex, isMuted, toggleMute, toggleColorFilter, overlayOpacity]
   );
 
+  // Cleanup timer if unmount
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
+  }, []);
+
   return (
     <View style={styles.container}>
       <LoginModal />
@@ -226,7 +256,7 @@ export default function MainFeed() {
           if (index === loadingIndex) {
             return {
               length: LOADING_HEIGHT,
-              offset: SCREEN_HEIGHT * fakeData.length,
+              offset: SCREEN_HEIGHT * items.length, // items.length is where loading starts
               index,
             };
           }
@@ -246,6 +276,8 @@ export default function MainFeed() {
           const endY = e.nativeEvent.contentOffset.y;
           const current = currentIndexRef.current;
           const rawTarget = decideTargetFromDrag(endY);
+
+          // limit to +/- 1 card per gesture
           const oneStepTarget = clamp(rawTarget, current - 1, current + 1);
 
           scrollToIndexAnimated(oneStepTarget);
@@ -259,6 +291,7 @@ export default function MainFeed() {
           const current = currentIndexRef.current;
           const oneStepLanded = clamp(landed, current - 1, current + 1);
 
+          // If we initiated an animated snap, trust it.
           if (snappingToIndexRef.current != null) {
             const target = snappingToIndexRef.current;
             const targetOffset = target * SCREEN_HEIGHT;
@@ -266,6 +299,7 @@ export default function MainFeed() {
 
             currentIndexRef.current = target;
 
+            // tiny correction for fractional offsets
             if (dist < 2) {
               listRef.current?.scrollToOffset({
                 offset: targetOffset,
@@ -277,6 +311,7 @@ export default function MainFeed() {
             return;
           }
 
+          // If user somehow landed elsewhere, animate to allowed page
           if (oneStepLanded !== landed) {
             scrollToIndexAnimated(oneStepLanded);
           } else {
