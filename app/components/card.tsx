@@ -20,7 +20,7 @@ const PAD = 20;
 const EXTRA_COUNT = 2;
 const BG = "rgba(0, 0, 0, 0.5)";
 
-const CardMenu = ({ isMuted, toggleMute }) => {
+const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
   const [open, setOpen] = useState(false);
   const t = useRef(new Animated.Value(0)).current; // 0 closed -> 1 open
 
@@ -82,7 +82,7 @@ const CardMenu = ({ isMuted, toggleMute }) => {
           {/* <Pressable onPress={() => {}} hitSlop={12}>
             <Feather name="volume-x" size={ICON_SIZE} color="#d1d5db" />
           </Pressable> */}
-          <Pressable hitSlop={12}>
+          <Pressable onPress={toggleColorFilter} hitSlop={12}>
             <Ionicons name="color-filter" size={ICON_SIZE} color="#d1d5db" />
           </Pressable>
           <Pressable
@@ -110,7 +110,7 @@ const CardMenu = ({ isMuted, toggleMute }) => {
 
 const Card = ({ url, isActive, isMuted, toggleMute }) => {
   const videoRef = useRef(null);
-  const [colorFilter, setColorFilter] = useState(false);
+  const [colorFilter, setColorFilter] = useState(true);
 
   // When leaving, reset to 0 so it’s ready next time
   useEffect(() => {
@@ -126,6 +126,10 @@ const Card = ({ url, isActive, isMuted, toggleMute }) => {
     })();
   }, [isActive]);
 
+  const toggleColorFilter = () => {
+    setColorFilter((prev) => !prev);
+  };
+
   return (
     <View style={styles.card}>
       <Video
@@ -139,9 +143,15 @@ const Card = ({ url, isActive, isMuted, toggleMute }) => {
         // ✅ Global mute + only active can have audio
         isMuted={!isActive || isMuted}
       />
-      <View style={styles.desaturateOverlay} />
+      <View
+        style={[styles.desaturateOverlay, { opacity: colorFilter ? 0.2 : 0 }]}
+      />
 
-      <CardMenu isMuted={isMuted} toggleMute={toggleMute} />
+      <CardMenu
+        toggleColorFilter={toggleColorFilter}
+        isMuted={isMuted}
+        toggleMute={toggleMute}
+      />
     </View>
   );
 };
@@ -225,7 +235,7 @@ const styles = StyleSheet.create({
   },
   desaturateOverlay: {
     ...StyleSheet.absoluteFillObject,
-    // backgroundColor: "rgba(128,128,128,0.5)", // tweak this
+    backgroundColor: "rgb(255, 247, 25)",
   },
 });
 
