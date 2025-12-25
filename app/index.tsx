@@ -58,7 +58,7 @@ export default function MainFeed() {
   const bounceBackLockRef = useRef(false);
   const loadingTimeoutRef = useRef(null);
   const isShowingLoadingRef = useRef(false);
-  const [colorFilterOn, setColorFilterOn] = useState(true);
+  const [colorFilterOn, setColorFilterOn] = useState(false);
 
   const overlayOpacity = useRef(
     new Animated.Value(colorFilterOn ? 0.3 : 0)
