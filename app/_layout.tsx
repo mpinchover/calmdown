@@ -21,7 +21,19 @@ export default function RootLayout() {
       >
         <Stack.Screen name="mainfeed" options={{ headerShown: false }} />
         <Stack.Screen
-          name="modal"
+          name="login-modal"
+          options={{
+            presentation: "modal",
+            title: "Modal",
+            headerShown: false,
+            animation: "fade",
+            contentStyle: {
+              backgroundColor: "transparent",
+            },
+          }}
+        />
+        <Stack.Screen
+          name="account-modal"
           options={{
             presentation: "modal",
             title: "Modal",

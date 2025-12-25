@@ -127,7 +127,7 @@ export default function MainFeed() {
 
       if (!pushedModalRef.current) {
         pushedModalRef.current = true;
-        router.push("/modal"); // or router.push("modal")
+        router.push("/login-modal"); // or router.push("modal")
         pushedModalRef.current = false;
       }
 

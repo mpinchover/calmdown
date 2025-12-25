@@ -3,6 +3,7 @@ import Feather from "@expo/vector-icons/Feather";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { ResizeMode, Video } from "expo-av";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -81,10 +82,15 @@ const CardMenu = ({ isMuted, toggleMute }) => {
           {/* <Pressable onPress={() => {}} hitSlop={12}>
             <Feather name="volume-x" size={ICON_SIZE} color="#d1d5db" />
           </Pressable> */}
-          <Pressable onPress={() => {}} hitSlop={12}>
+          <Pressable hitSlop={12}>
             <Ionicons name="color-filter" size={ICON_SIZE} color="#d1d5db" />
           </Pressable>
-          <Pressable onPress={() => {}} hitSlop={12}>
+          <Pressable
+            onPress={() => {
+              router.push("/account-modal");
+            }}
+            hitSlop={12}
+          >
             <MaterialCommunityIcons
               name="account"
               size={ICON_SIZE}
@@ -104,6 +110,7 @@ const CardMenu = ({ isMuted, toggleMute }) => {
 
 const Card = ({ url, isActive, isMuted, toggleMute }) => {
   const videoRef = useRef(null);
+  const [colorFilter, setColorFilter] = useState(false);
 
   // When leaving, reset to 0 so it’s ready next time
   useEffect(() => {
@@ -132,6 +139,7 @@ const Card = ({ url, isActive, isMuted, toggleMute }) => {
         // ✅ Global mute + only active can have audio
         isMuted={!isActive || isMuted}
       />
+      <View style={styles.desaturateOverlay} />
 
       <CardMenu isMuted={isMuted} toggleMute={toggleMute} />
     </View>
@@ -142,21 +150,11 @@ const styles = StyleSheet.create({
   card: {
     height: SCREEN_HEIGHT,
     width: "100%",
-    backgroundColor: "black",
+    // backgroundColor: "black",
+    // backgroundColor: "rgba(128,128,128,0.35)",
     position: "relative",
   },
-  //   cardMenu: {
-  //     position: "absolute",
-  //     bottom: "10%",
-  //     right: "5%",
-  //     backgroundColor: "rgba(0, 0, 0, 0.5)", // translucent black
-  //     flexDirection: "column",
-  //     justifyContent: "center",
-  //     alignItems: "center",
-  //     padding: 20,
-  //     borderRadius: 16, // use number, not percentage (RN best practice)
-  //     rowGap: 20,
-  //   },
+
   expandedStack: {
     backgroundColor: "rgba(0, 0, 0, 0.5)", // translucent black
     position: "absolute",
@@ -224,6 +222,10 @@ const styles = StyleSheet.create({
   base: {
     alignItems: "center",
     rowGap: GAP,
+  },
+  desaturateOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    // backgroundColor: "rgba(128,128,128,0.5)", // tweak this
   },
 });
 
