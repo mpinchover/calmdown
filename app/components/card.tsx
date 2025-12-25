@@ -12,26 +12,25 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const ICON_SIZE = 24;
 const GAP = 20;
 const PAD = 20;
 const EXTRA_COUNT = 2;
-const BG = "rgba(0, 0, 0, 0.5)";
+
+const COLOR_FILTER = "rgba(255, 247, 25, 1)";
 
 const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
   const [open, setOpen] = useState(false);
-  const t = useRef(new Animated.Value(0)).current; // 0 closed -> 1 open
+  const t = useRef(new Animated.Value(0)).current;
 
   const middleFullHeight =
     2 * GAP + EXTRA_COUNT * ICON_SIZE + (EXTRA_COUNT - 1) * GAP;
 
-  // Closed height includes padding and enough room for space-between to feel good.
-  // We'll add an EXTRA_GAP so the two icons aren't cramped.
-  const EXTRA_GAP = GAP; // tweak if you want more/less space when closed
+  const EXTRA_GAP = GAP;
   const closedHeight = PAD * 2 + ICON_SIZE * 2 + EXTRA_GAP;
-
   const openHeight = closedHeight + middleFullHeight;
 
   const animatedHeight = t.interpolate({
@@ -61,7 +60,6 @@ const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
 
   return (
     <Animated.View style={[styles.cardMenu, { height: animatedHeight }]}>
-      {/* TOP: Volume */}
       <Pressable onPress={toggleMute} hitSlop={12}>
         <Feather
           name={isMuted ? "volume-x" : "volume-2"}
@@ -70,7 +68,6 @@ const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
         />
       </Pressable>
 
-      {/* MIDDLE: expandable area */}
       <Animated.View
         style={[
           styles.middleWrap,
@@ -79,18 +76,11 @@ const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
         pointerEvents={open ? "auto" : "none"}
       >
         <View style={styles.middleInner}>
-          {/* <Pressable onPress={() => {}} hitSlop={12}>
-            <Feather name="volume-x" size={ICON_SIZE} color="#d1d5db" />
-          </Pressable> */}
           <Pressable onPress={toggleColorFilter} hitSlop={12}>
             <Ionicons name="color-filter" size={ICON_SIZE} color="#d1d5db" />
           </Pressable>
-          <Pressable
-            onPress={() => {
-              router.push("/account-modal");
-            }}
-            hitSlop={12}
-          >
+
+          <Pressable onPress={() => router.push("/account-modal")} hitSlop={12}>
             <MaterialCommunityIcons
               name="account"
               size={ICON_SIZE}
@@ -100,7 +90,6 @@ const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
         </View>
       </Animated.View>
 
-      {/* BOTTOM: Menu */}
       <Pressable onPress={toggleMenu} hitSlop={12}>
         <AntDesign name="menu" size={ICON_SIZE} color="#d1d5db" />
       </Pressable>
@@ -108,27 +97,26 @@ const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
   );
 };
 
-const Card = ({ url, isActive, isMuted, toggleMute }) => {
+export default function Card({
+  url,
+  isActive,
+  isMuted,
+  toggleMute,
+  toggleColorFilter,
+  overlayOpacity, // ✅ animated value from MainFeed
+}) {
   const videoRef = useRef(null);
-  const [colorFilter, setColorFilter] = useState(true);
 
-  // When leaving, reset to 0 so it’s ready next time
+  // reset when leaving
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-
     (async () => {
       try {
-        if (!isActive) {
-          await v.setPositionAsync(0);
-        }
+        if (!isActive) await v.setPositionAsync(0);
       } catch {}
     })();
   }, [isActive]);
-
-  const toggleColorFilter = () => {
-    setColorFilter((prev) => !prev);
-  };
 
   return (
     <View style={styles.card}>
@@ -138,59 +126,34 @@ const Card = ({ url, isActive, isMuted, toggleMute }) => {
         style={StyleSheet.absoluteFill}
         resizeMode={ResizeMode.COVER}
         isLooping
-        // ✅ Let props control play/pause so rerenders don't stop playback
         shouldPlay={isActive}
-        // ✅ Global mute + only active can have audio
         isMuted={!isActive || isMuted}
       />
-      <View
-        style={[styles.desaturateOverlay, { opacity: colorFilter ? 0.2 : 0 }]}
+
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.desaturateOverlay, { opacity: overlayOpacity }]}
       />
 
       <CardMenu
-        toggleColorFilter={toggleColorFilter}
         isMuted={isMuted}
         toggleMute={toggleMute}
+        toggleColorFilter={toggleColorFilter}
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   card: {
     height: SCREEN_HEIGHT,
     width: "100%",
-    // backgroundColor: "black",
-    // backgroundColor: "rgba(128,128,128,0.35)",
     position: "relative",
+    backgroundColor: "black",
   },
-
-  expandedStack: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // translucent black
-    position: "absolute",
-    // Sit on top of the volume+menu row, then animate upward from there.
-    // 20 padding + volume icon + GAP puts the stack right above.
-    bottom: 20 + ICON_SIZE + GAP,
-    right: 20,
-    alignItems: "center",
-    rowGap: GAP,
-  },
-  root: {
-    position: "absolute",
-    bottom: "10%",
-    right: "5%",
-    alignItems: "center",
-  },
-
-  expandedMenu: {
-    position: "absolute",
-    bottom: "100%", // sit directly above the base menu
-    marginBottom: GAP,
-    backgroundColor: BG,
-    padding: 20,
-    borderRadius: 16,
-    alignItems: "center",
-    rowGap: GAP,
+  desaturateOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLOR_FILTER,
   },
   cardMenu: {
     position: "absolute",
@@ -200,43 +163,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: PAD,
     alignItems: "center",
-    justifyContent: "space-between", // ✅ key: evenly spaces top/bottom in closed state
+    justifyContent: "space-between",
     overflow: "hidden",
   },
-
-  middleWrap: {
-    width: "100%",
-    overflow: "hidden",
-  },
-
-  middleInner: {
-    marginVertical: GAP,
-    alignItems: "center",
-    rowGap: GAP,
-  },
-  // Middle section: has its own top/bottom spacing so it visually sits between volume/menu
-  extrasMiddle: {
-    marginVertical: GAP, // space above/below between volume and menu
-    alignItems: "center",
-    rowGap: GAP, // space between the middle icons
-  },
-
-  // Extras stack sits above the base row inside same container
-  extras: {
-    alignItems: "center",
-    rowGap: GAP,
-    marginBottom: GAP, // gap between extras and volume button
-  },
-
-  // Base row is always visible at the bottom
-  base: {
-    alignItems: "center",
-    rowGap: GAP,
-  },
-  desaturateOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgb(255, 247, 25)",
-  },
+  middleWrap: { width: "100%", overflow: "hidden" },
+  middleInner: { marginVertical: GAP, alignItems: "center", rowGap: GAP },
 });
-
-export default Card;

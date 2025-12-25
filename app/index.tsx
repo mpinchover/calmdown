@@ -1,6 +1,13 @@
 import { router } from "expo-router";
-import React, { useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
+  Animated,
   Dimensions,
   FlatList,
   StatusBar,
@@ -33,9 +40,11 @@ const dataWithLoading = [
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
 const ADVANCE_THRESHOLD = 0.2 * SCREEN_HEIGHT;
+const LOADING_STICK_MS = 300;
+const FADE_MS = 180;
 
 const LoginModal = () => {
-  return <View style={styles.loginModal}></View>;
+  return <View style={styles.loginModal} />;
 };
 
 export default function MainFeed() {
@@ -49,7 +58,11 @@ export default function MainFeed() {
   const bounceBackLockRef = useRef(false);
   const loadingTimeoutRef = useRef(null);
   const isShowingLoadingRef = useRef(false);
-  const LOADING_STICK_MS = 300;
+  const [colorFilterOn, setColorFilterOn] = useState(true);
+
+  const overlayOpacity = useRef(
+    new Animated.Value(colorFilterOn ? 0.3 : 0)
+  ).current;
 
   const currentIndexRef = useRef(0);
   const dragStartOffsetRef = useRef(0);
@@ -57,9 +70,13 @@ export default function MainFeed() {
 
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     setIsMuted((prev) => !prev);
-  };
+  }, []);
+
+  const toggleColorFilter = useCallback(() => {
+    setColorFilterOn((prev) => !prev);
+  }, []);
 
   const scrollToIndexAnimated = (index) => {
     const clamped = clamp(index, 0, maxIndex);
@@ -84,20 +101,26 @@ export default function MainFeed() {
     return current;
   };
 
-  // Consider an item "active" when >= 80% visible
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 30,
   }).current;
 
+  // ✅ animate overlay whenever global filter changes
+  useEffect(() => {
+    overlayOpacity.stopAnimation();
+    Animated.timing(overlayOpacity, {
+      toValue: colorFilterOn ? 0.3 : 0,
+      duration: FADE_MS,
+      useNativeDriver: true,
+    }).start();
+  }, [colorFilterOn, overlayOpacity]);
+
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    console.log("ON VIEWABLE HAS CHANGED");
     const loading = viewableItems?.find(
       (x) => x.isViewable && x.item?.type === "loading"
     );
 
     if (loading) {
-      console.log("LOADING SCREEN DETECTED");
-
       if (bounceBackLockRef.current) return;
 
       bounceBackLockRef.current = true;
@@ -107,8 +130,6 @@ export default function MainFeed() {
       if (loadingTimeoutRef.current) return;
 
       loadingTimeoutRef.current = setTimeout(() => {
-        console.log("SCROLLING BACK AFTER DELAY");
-
         listRef.current?.scrollToIndex({
           index: lastRealIndex,
           animated: true,
@@ -127,7 +148,7 @@ export default function MainFeed() {
 
       if (!pushedModalRef.current) {
         pushedModalRef.current = true;
-        router.push("/login-modal"); // or router.push("modal")
+        router.push("/login-modal");
         pushedModalRef.current = false;
       }
 
@@ -135,39 +156,8 @@ export default function MainFeed() {
     }
 
     const v = viewableItems?.find((x) => x.isViewable);
-    if (!v) {
-      return;
-    }
+    if (!v) return;
 
-    console.log("V IS: ", v);
-
-    // if (v.item?.type === "loading") {
-    //   console.log("LOADING SCREEN");
-    //   if (bounceBackLockRef.current) {
-    //     return;
-    //   }
-
-    //   bounceBackLockRef.current = true;
-    //   // Start fetch here (or set state that triggers fetch)
-    //   // fetchMore();
-
-    //   requestAnimationFrame(() => {
-    //     console.log("SCROLLING BACK");
-    //     listRef.current?.scrollToIndex({
-    //       index: lastRealIndex,
-    //       animated: true,
-    //       viewPosition: 0,
-    //     });
-    //     // release lock shortly after
-    //     setTimeout(() => {
-    //       bounceBackLockRef.current = false;
-    //     }, 250);
-    //   });
-
-    //   return;
-    // }
-
-    // Normal active card
     if (v.index != null && v.index <= lastRealIndex) {
       setActiveIndex(v.index);
     }
@@ -177,25 +167,29 @@ export default function MainFeed() {
     { viewabilityConfig, onViewableItemsChanged },
   ]).current;
 
-  const renderItem = ({ item, index }) => {
-    if (item.type === "loading") {
-      return (
-        <View style={[styles.loadingCard, { height: LOADING_HEIGHT }]}>
-          <Text style={styles.loadingText}>Loading…</Text>
-        </View>
-      );
-    }
+  const renderItem = useCallback(
+    ({ item, index }) => {
+      if (item.type === "loading") {
+        return (
+          <View style={[styles.loadingCard, { height: LOADING_HEIGHT }]}>
+            <Text style={styles.loadingText}>Loading…</Text>
+          </View>
+        );
+      }
 
-    return (
-      <Card
-        url={item.url}
-        isActive={index === activeIndex}
-        toggleMute={toggleMute}
-        isMuted={isMuted}
-        // pass isMuted/toggleMute too if you have them
-      />
-    );
-  };
+      return (
+        <Card
+          url={item.url}
+          isActive={index === activeIndex}
+          isMuted={isMuted}
+          toggleMute={toggleMute}
+          toggleColorFilter={toggleColorFilter}
+          overlayOpacity={overlayOpacity}
+        />
+      );
+    },
+    [activeIndex, isMuted, toggleMute, toggleColorFilter, overlayOpacity]
+  );
 
   return (
     <View style={styles.container}>
@@ -217,7 +211,6 @@ export default function MainFeed() {
         viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
         getItemLayout={(_, index) => {
           if (index === loadingIndex) {
-            // Offset is full pages for all real items
             return {
               length: LOADING_HEIGHT,
               offset: SCREEN_HEIGHT * fakeData.length,
@@ -230,7 +223,6 @@ export default function MainFeed() {
             index,
           };
         }}
-        // onViewableItemsChanged={onViewableItemsChanged}
         onScrollBeginDrag={(e) => {
           dragStartOffsetRef.current = e.nativeEvent.contentOffset.y;
           snappingToIndexRef.current = null;
@@ -239,8 +231,6 @@ export default function MainFeed() {
           if (isShowingLoadingRef.current) return;
 
           const endY = e.nativeEvent.contentOffset.y;
-
-          // Pick a target using halfway rule, then clamp to +/-1 max
           const current = currentIndexRef.current;
           const rawTarget = decideTargetFromDrag(endY);
           const oneStepTarget = clamp(rawTarget, current - 1, current + 1);
@@ -249,27 +239,20 @@ export default function MainFeed() {
         }}
         onMomentumScrollEnd={(e) => {
           if (isShowingLoadingRef.current) return;
-          const y = e.nativeEvent.contentOffset.y;
 
-          // Where did RN actually land?
+          const y = e.nativeEvent.contentOffset.y;
           const landed = clamp(Math.round(y / SCREEN_HEIGHT), 0, maxIndex);
 
-          // Enforce max +/-1 (prevents multi-card flings)
           const current = currentIndexRef.current;
           const oneStepLanded = clamp(landed, current - 1, current + 1);
 
-          // If we initiated an animated snap, trust it.
-          // Only do a non-animated "micro-correction" if we're already extremely close
-          // (prevents the no-animation feel).
           if (snappingToIndexRef.current != null) {
             const target = snappingToIndexRef.current;
-
             const targetOffset = target * SCREEN_HEIGHT;
             const dist = Math.abs(y - targetOffset);
 
             currentIndexRef.current = target;
 
-            // Only hard-correct if we're within a few pixels (fractional offset issue)
             if (dist < 2) {
               listRef.current?.scrollToOffset({
                 offset: targetOffset,
@@ -281,7 +264,6 @@ export default function MainFeed() {
             return;
           }
 
-          // If user somehow landed elsewhere, animate to the allowed page
           if (oneStepLanded !== landed) {
             scrollToIndexAnimated(oneStepLanded);
           } else {
