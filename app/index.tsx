@@ -32,6 +32,7 @@ const dataWithLoading = [
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
+const ADVANCE_THRESHOLD = 0.2 * SCREEN_HEIGHT;
 
 const LoginModal = () => {
   return <View style={styles.loginModal}></View>;
@@ -77,7 +78,7 @@ export default function MainFeed() {
 
     const current = currentIndexRef.current;
 
-    if (Math.abs(delta) >= SCREEN_HEIGHT / 2) {
+    if (Math.abs(delta) >= ADVANCE_THRESHOLD) {
       return delta > 0 ? current + 1 : current - 1;
     }
     return current;
@@ -85,7 +86,7 @@ export default function MainFeed() {
 
   // Consider an item "active" when >= 80% visible
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 10,
+    itemVisiblePercentThreshold: 30,
   }).current;
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
