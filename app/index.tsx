@@ -29,6 +29,17 @@ const fakeData = [
   },
 ];
 
+const fakeDataAfterLoading = [
+  {
+    id: 3,
+    url: "https://storage.googleapis.com/voyager-feed-public/videos/961d8c19-c4f4-4e18-9d43-20b26cb6530c",
+  },
+  {
+    id: 4,
+    url: "https://storage.googleapis.com/voyager-feed-public/videos/38a86c89-f87f-429c-a9e2-e4b45ece090b",
+  },
+];
+
 const dataWithLoading = [
   ...fakeData,
   {
@@ -48,6 +59,8 @@ const LoginModal = () => {
 };
 
 export default function MainFeed() {
+  // TODO - replace with firebase auth
+  const [auth, setAuth] = useState({ user: "123" });
   const listRef = useRef(null);
   const maxIndex = useMemo(() => dataWithLoading.length - 1, []);
   const [activeIndex, setActiveIndex] = useState(0);
