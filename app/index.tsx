@@ -195,6 +195,7 @@ export default function MainFeed() {
 
   // UI state
   const [auth] = useState({ user: "123" }); // TODO replace with firebase auth
+  // const auth = null;
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [colorFilterOn, setColorFilterOn] = useState(false);
