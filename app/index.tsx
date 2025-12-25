@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React, { useMemo, useRef, useState } from "react";
 import {
   Dimensions,
@@ -7,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+
 import Card from "./components/card";
 
 const fakeData = [
@@ -31,11 +33,16 @@ const dataWithLoading = [
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
 
+const LoginModal = () => {
+  return <View style={styles.loginModal}></View>;
+};
+
 export default function MainFeed() {
   const listRef = useRef(null);
   const maxIndex = useMemo(() => dataWithLoading.length - 1, []);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const pushedModalRef = useRef(false);
   const [lastRealIndex, setLastRealIndex] = useState(fakeData.length - 1);
   const [loadingIndex, setLoadingIndex] = useState(dataWithLoading.length - 1);
   const bounceBackLockRef = useRef(false);
@@ -117,6 +124,12 @@ export default function MainFeed() {
         }, 250);
       }, LOADING_STICK_MS);
 
+      if (!pushedModalRef.current) {
+        pushedModalRef.current = true;
+        router.push("/modal"); // or router.push("modal")
+        pushedModalRef.current = false;
+      }
+
       return;
     }
 
@@ -185,6 +198,7 @@ export default function MainFeed() {
 
   return (
     <View style={styles.container}>
+      <LoginModal />
       <StatusBar hidden />
       <FlatList
         ref={listRef}
@@ -292,5 +306,8 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     fontSize: 18,
     fontWeight: "600",
+  },
+  loginModal: {
+    position: "absolute",
   },
 });

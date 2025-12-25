@@ -20,6 +20,18 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="mainfeed" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="modal"
+          options={{
+            presentation: "modal",
+            title: "Modal",
+            headerShown: false,
+            animation: "fade",
+            contentStyle: {
+              backgroundColor: "transparent",
+            },
+          }}
+        />
         {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} /> */}
       </Stack>
