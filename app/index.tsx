@@ -12,158 +12,17 @@ import {
   FlatList,
   StatusBar,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 
 import Card from "./components/card";
+import CardMenu from "./components/card-menu";
+import LoadingCard from "./components/loading-card";
+import initialFeed from "./fakedata/initial-feed.json";
+import loadedFeed from "./fakedata/loaded-feed.json";
 
-const fakeData = [
-  {
-    id: 1,
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/6440ada6-6d9f-48b9-b2d1-458dd9aa7d60",
-  },
-  {
-    id: 2,
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/4f00790b-b906-4875-9153-4c328d774e57",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/a7aa933d-aa30-4a2c-be69-5a77f5431fe5",
-    card_type: "video",
-    id: "a7aa933d-aa30-4a2c-be69-5a77f5431fe5",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/89f3c012-eeb4-4db1-8fc5-ba5ed33951a7",
-    card_type: "video",
-    id: "89f3c012-eeb4-4db1-8fc5-ba5ed33951a7",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/4f2509a3-bbd5-429d-b0d4-5d2eff5ad7a3",
-    card_type: "video",
-    id: "4f2509a3-bbd5-429d-b0d4-5d2eff5ad7a3",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/0bbe5d3e-a9da-410d-bc8f-62e76d769bda",
-    card_type: "video",
-    id: "0bbe5d3e-a9da-410d-bc8f-62e76d769bda",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/81a24259-4ffc-4d31-803f-35bec75b8fd1",
-    card_type: "video",
-    id: "81a24259-4ffc-4d31-803f-35bec75b8fd1",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/53037fa7-6146-4419-8945-7e7e1ece60c0",
-    card_type: "video",
-    id: "53037fa7-6146-4419-8945-7e7e1ece60c0",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/ef914520-2194-4977-9cf5-62c9d671bc50",
-    card_type: "video",
-    id: "ef914520-2194-4977-9cf5-62c9d671bc50",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/01d4f656-5de2-48b7-9700-b637b7e92c3f",
-    card_type: "video",
-    id: "01d4f656-5de2-48b7-9700-b637b7e92c3f",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/026f7fac-d2e0-43db-aef8-a72eedfc3429",
-    card_type: "video",
-    id: "026f7fac-d2e0-43db-aef8-a72eedfc3429",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/0282a719-147c-43e4-9336-6a362c608707",
-    card_type: "video",
-    id: "0282a719-147c-43e4-9336-6a362c608707",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/06c37b18-e334-4c01-879a-dcc7f6e84c27",
-    card_type: "video",
-    id: "06c37b18-e334-4c01-879a-dcc7f6e84c27",
-  },
-];
-
-const fakeDataAfterLoading = [
-  {
-    id: 3,
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/961d8c19-c4f4-4e18-9d43-20b26cb6530c",
-  },
-  {
-    id: 4,
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/38a86c89-f87f-429c-a9e2-e4b45ece090b",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/3b502c20-49b0-4931-8077-96cc71133eb6",
-    card_type: "video",
-    id: "3b502c20-49b0-4931-8077-96cc71133eb6",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/3b906137-1650-4bb5-85a2-0f5fee865686",
-    card_type: "video",
-    id: "3b906137-1650-4bb5-85a2-0f5fee865686",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/3fd98b45-3ebe-4e20-8352-0bddb69d0e74",
-    card_type: "video",
-    id: "3fd98b45-3ebe-4e20-8352-0bddb69d0e74",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/41411211-7d38-4fe5-b7d4-eb596d1b21b4",
-    card_type: "video",
-    id: "41411211-7d38-4fe5-b7d4-eb596d1b21b4",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/46cf912d-5f6d-45a7-91cf-312e884cab2a",
-    card_type: "video",
-    id: "46cf912d-5f6d-45a7-91cf-312e884cab2a",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/47340af1-d21c-4c73-a23b-4fc0201d439e",
-    card_type: "video",
-    id: "47340af1-d21c-4c73-a23b-4fc0201d439e",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/4fd4d38d-e8b1-4d7d-b173-ed8a28d1573d",
-    card_type: "video",
-    id: "4fd4d38d-e8b1-4d7d-b173-ed8a28d1573d",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/50fe017b-651f-4991-a68a-041927a48675",
-    card_type: "video",
-    id: "50fe017b-651f-4991-a68a-041927a48675",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/52bf80a6-bb20-4813-ba40-ac925a16f56b",
-    card_type: "video",
-    id: "52bf80a6-bb20-4813-ba40-ac925a16f56b",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/553c6035-85e5-4914-87f2-61a5a7b3ef2e",
-    card_type: "video",
-    id: "553c6035-85e5-4914-87f2-61a5a7b3ef2e",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/56afe485-f567-453e-a0b1-baa948a43c92",
-    card_type: "video",
-    id: "56afe485-f567-453e-a0b1-baa948a43c92",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/5762bb8d-230e-4605-9c3e-d9a392e1556a",
-    card_type: "video",
-    id: "5762bb8d-230e-4605-9c3e-d9a392e1556a",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/5c50933c-f583-4cae-832a-c20a1ae6ffe1",
-    card_type: "video",
-    id: "5c50933c-f583-4cae-832a-c20a1ae6ffe1",
-  },
-  {
-    url: "https://storage.googleapis.com/voyager-feed-public/videos/5fd8c41e-3fba-4570-b0ed-fa5a5a763347",
-    card_type: "video",
-    id: "5fd8c41e-3fba-4570-b0ed-fa5a5a763347",
-  },
-];
+const fakeData = initialFeed;
+const fakeDataAfterLoading = loadedFeed;
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
@@ -331,11 +190,7 @@ export default function MainFeed() {
   const renderItem = useCallback(
     ({ item, index }) => {
       if (item.type === "loading") {
-        return (
-          <View style={[styles.loadingCard, { height: LOADING_HEIGHT }]}>
-            <Text style={styles.loadingText}>Loading…</Text>
-          </View>
-        );
+        return <LoadingCard />;
       }
 
       return (
@@ -343,11 +198,7 @@ export default function MainFeed() {
           url={item.url}
           isActive={index === activeIndex}
           isMuted={isMuted}
-          toggleMute={toggleMute}
-          toggleColorFilter={toggleColorFilter}
           overlayOpacity={overlayOpacity}
-          setIsMenuOpen={setIsMenuOpen}
-          isMenuOpen={isMenuOpen}
         />
       );
     },
@@ -372,6 +223,7 @@ export default function MainFeed() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
+
       <FlatList
         ref={listRef}
         data={dataWithLoading}
@@ -453,25 +305,19 @@ export default function MainFeed() {
           }
         }}
       />
+      <CardMenu
+        isMuted={isMuted}
+        toggleMute={toggleMute}
+        toggleColorFilter={toggleColorFilter}
+        setIsMenuOpen={setIsMenuOpen}
+        isMenuOpen={isMenuOpen}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "black" },
-  loadingCard: {
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "black",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.15)",
-  },
-  loadingText: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 18,
-    fontWeight: "600",
-  },
+  container: { flex: 1, backgroundColor: "black", position: "relative" },
   loginModal: {
     position: "absolute",
   },
