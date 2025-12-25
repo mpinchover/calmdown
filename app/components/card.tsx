@@ -4,7 +4,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { ResizeMode, Video } from "expo-av";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Animated,
   Dimensions,
@@ -22,8 +22,14 @@ const EXTRA_COUNT = 2;
 
 const COLOR_FILTER = "rgba(255, 247, 25, 1)";
 
-const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
-  const [open, setOpen] = useState(false);
+const CardMenu = ({
+  isMuted,
+  toggleMute,
+  toggleColorFilter,
+  setIsMenuOpen,
+  isMenuOpen,
+}) => {
+  //   const [open, setOpen] = useState(false);
   const t = useRef(new Animated.Value(0)).current;
 
   const middleFullHeight =
@@ -49,8 +55,8 @@ const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
   });
 
   const toggleMenu = () => {
-    const next = !open;
-    setOpen(next);
+    const next = !isMenuOpen;
+    setIsMenuOpen(next);
     Animated.timing(t, {
       toValue: next ? 1 : 0,
       duration: 200,
@@ -73,7 +79,7 @@ const CardMenu = ({ isMuted, toggleMute, toggleColorFilter }) => {
           styles.middleWrap,
           { height: middleHeight, opacity: extrasOpacity },
         ]}
-        pointerEvents={open ? "auto" : "none"}
+        pointerEvents={isMenuOpen ? "auto" : "none"}
       >
         <View style={styles.middleInner}>
           <Pressable onPress={toggleColorFilter} hitSlop={12}>
@@ -104,6 +110,8 @@ export default function Card({
   toggleMute,
   toggleColorFilter,
   overlayOpacity, // ✅ animated value from MainFeed
+  setIsMenuOpen,
+  isMenuOpen,
 }) {
   const videoRef = useRef(null);
 
@@ -139,6 +147,8 @@ export default function Card({
         isMuted={isMuted}
         toggleMute={toggleMute}
         toggleColorFilter={toggleColorFilter}
+        setIsMenuOpen={setIsMenuOpen}
+        isMenuOpen={isMenuOpen}
       />
     </View>
   );
