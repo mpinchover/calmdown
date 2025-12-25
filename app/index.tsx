@@ -30,11 +30,13 @@ const ADVANCE_THRESHOLD = 0.2 * SCREEN_HEIGHT;
 const FAKE_API_MS = 3000; // ✅ fake “network call”
 const FADE_MS = 180;
 const SCROLL_BACK_MS = 300; // animation timing
+const TAP_SLOP = 8; // pixels
 
 export default function MainFeed() {
   // List data (grows after “fetch”)
   const [items, setItems] = useState(fakeData);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   // Derived indices/data
   const dataWithLoading = useMemo(
@@ -75,6 +77,21 @@ export default function MainFeed() {
   const loadingTimeoutRef = useRef(null);
   const hasLoadedMoreRef = useRef(false);
 
+  const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
+
+  const cardMenuRef = useRef(null);
+  const menuRectRef = useRef(null); // { x, y, w, h } in window coords
+
+  const refreshMenuRect = useCallback(() => {
+    // measure after layout has happened
+    requestAnimationFrame(() => {
+      cardMenuRef.current?.measureInWindow((x, y, w, h) => {
+        menuRectRef.current = { x, y, w, h };
+      });
+    });
+  }, []);
+
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
 
   const toggleMute = useCallback(() => {
@@ -94,6 +111,10 @@ export default function MainFeed() {
       useNativeDriver: true,
     }).start();
   }, [colorFilterOn, overlayOpacity]);
+
+  useEffect(() => {
+    if (isMenuVisible) refreshMenuRect();
+  }, [isMenuVisible, isMenuOpen, refreshMenuRect]);
 
   const scrollToIndexAnimated = useCallback(
     (index) => {
@@ -213,6 +234,11 @@ export default function MainFeed() {
     ]
   );
 
+  const onScreenTap = () => {
+    // setIsMenuOpen((pr
+    setIsMenuVisible((prev) => !prev);
+  };
+
   // Cleanup timer if unmount
   useEffect(() => {
     return () => {
@@ -221,7 +247,41 @@ export default function MainFeed() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onTouchStart={(e) => {
+        const { pageX, pageY } = e.nativeEvent;
+        touchStartX.current = pageX;
+        touchStartY.current = pageY;
+      }}
+      onTouchEnd={(e) => {
+        const { pageX, pageY } = e.nativeEvent;
+
+        const dx = Math.abs(pageX - touchStartX.current);
+        const dy = Math.abs(pageY - touchStartY.current);
+
+        const isTap = dx < TAP_SLOP && dy < TAP_SLOP;
+        if (!isTap) return;
+
+        // If menu is visible and tap is INSIDE it, do nothing
+        if (isMenuVisible && menuRectRef.current) {
+          const { x, y, w, h } = menuRectRef.current;
+          const inside =
+            pageX >= x && pageX <= x + w && pageY >= y && pageY <= y + h;
+
+          if (inside) return; // ✅ don't hide while using menu
+        }
+
+        // Otherwise toggle:
+        // - if hidden -> show
+        // - if visible + outside -> hide
+        console.log("TAP (not scroll)");
+        setIsMenuVisible((prev) => !prev);
+
+        // optional: collapse when hiding
+        if (isMenuVisible) setIsMenuOpen(false);
+      }}
+    >
       <StatusBar hidden />
 
       <FlatList
@@ -305,13 +365,18 @@ export default function MainFeed() {
           }
         }}
       />
-      <CardMenu
-        isMuted={isMuted}
-        toggleMute={toggleMute}
-        toggleColorFilter={toggleColorFilter}
-        setIsMenuOpen={setIsMenuOpen}
-        isMenuOpen={isMenuOpen}
-      />
+      {/* <Pressable style={styles.tapCatcher} onPress={onScreenTap} /> */}
+      {isMenuVisible && (
+        <CardMenu
+          cardMenuRef={cardMenuRef}
+          onMenuLayout={refreshMenuRect} // ✅ add this
+          isMuted={isMuted}
+          toggleMute={toggleMute}
+          toggleColorFilter={toggleColorFilter}
+          setIsMenuOpen={setIsMenuOpen}
+          isMenuOpen={isMenuOpen}
+        />
+      )}
     </View>
   );
 }
@@ -320,5 +385,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "black", position: "relative" },
   loginModal: {
     position: "absolute",
+  },
+  tapCatcher: {
+    ...StyleSheet.absoluteFillObject,
+    // keep it invisible
+    backgroundColor: "transparent",
+    // CardMenu has absolute positioning later in tree, so it renders above this.
   },
 });

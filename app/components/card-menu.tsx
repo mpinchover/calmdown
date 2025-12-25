@@ -25,6 +25,8 @@ const CardMenu = ({
   toggleColorFilter,
   setIsMenuOpen,
   isMenuOpen,
+  cardMenuRef,
+  onMenuLayout,
 }) => {
   //   const [open, setOpen] = useState(false);
   const t = useRef(new Animated.Value(0)).current;
@@ -62,7 +64,11 @@ const CardMenu = ({
   };
 
   return (
-    <Animated.View style={[styles.cardMenu, { height: animatedHeight }]}>
+    <Animated.View
+      onLayout={onMenuLayout} // ✅ measure when layout happen
+      ref={cardMenuRef}
+      style={[styles.cardMenu, { height: animatedHeight }]}
+    >
       <Pressable onPress={toggleMute} hitSlop={12}>
         <Feather
           name={isMuted ? "volume-x" : "volume-2"}
