@@ -29,6 +29,7 @@ const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
 const ADVANCE_THRESHOLD = 0.2 * SCREEN_HEIGHT;
 const FAKE_API_MS = 3000; // ✅ fake “network call”
 const FADE_MS = 180;
+const MENU_FADE_MS = 180;
 const SCROLL_BACK_MS = 300; // animation timing
 const TAP_SLOP = 8; // pixels
 
@@ -37,6 +38,7 @@ export default function MainFeed() {
   const [items, setItems] = useState(fakeData);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const menuOpacity = useRef(new Animated.Value(0)).current; // animated visibility
 
   // Derived indices/data
   const dataWithLoading = useMemo(
@@ -82,6 +84,30 @@ export default function MainFeed() {
 
   const cardMenuRef = useRef(null);
   const menuRectRef = useRef(null); // { x, y, w, h } in window coords
+
+  const showMenu = useCallback(() => {
+    setIsMenuVisible(true);
+    menuOpacity.stopAnimation();
+    Animated.timing(menuOpacity, {
+      toValue: 1,
+      duration: MENU_FADE_MS,
+      useNativeDriver: true,
+    }).start();
+  }, [menuOpacity]);
+
+  const hideMenu = useCallback(() => {
+    menuOpacity.stopAnimation();
+    Animated.timing(menuOpacity, {
+      toValue: 0,
+      duration: MENU_FADE_MS,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) {
+        setIsMenuVisible(false);
+        setIsMenuOpen(false); // optional collapse
+      }
+    });
+  }, [menuOpacity, setIsMenuOpen]);
 
   const refreshMenuRect = useCallback(() => {
     // measure after layout has happened
@@ -276,10 +302,12 @@ export default function MainFeed() {
         // - if hidden -> show
         // - if visible + outside -> hide
         console.log("TAP (not scroll)");
-        setIsMenuVisible((prev) => !prev);
+        // setIsMenuVisible((prev) => !prev);
 
-        // optional: collapse when hiding
-        if (isMenuVisible) setIsMenuOpen(false);
+        // // optional: collapse when hiding
+        // if (isMenuVisible) setIsMenuOpen(false);
+        if (isMenuVisible) hideMenu();
+        else showMenu();
       }}
     >
       <StatusBar hidden />
@@ -366,15 +394,18 @@ export default function MainFeed() {
         }}
       />
       {/* <Pressable style={styles.tapCatcher} onPress={onScreenTap} /> */}
+
       {isMenuVisible && (
         <CardMenu
           cardMenuRef={cardMenuRef}
-          onMenuLayout={refreshMenuRect} // ✅ add this
+          onMenuLayout={refreshMenuRect}
           isMuted={isMuted}
           toggleMute={toggleMute}
           toggleColorFilter={toggleColorFilter}
           setIsMenuOpen={setIsMenuOpen}
           isMenuOpen={isMenuOpen}
+          menuOpacity={menuOpacity}
+          menuPointerEvents="auto"
         />
       )}
     </View>
