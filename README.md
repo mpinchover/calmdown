@@ -1,3 +1,13 @@
+# TODO
+
+## remove profile icon if user is not logged in
+
+## create another screen for not logged in
+
+### if user is not logged in, they see the same intro vids
+
+### if user is logged in, move to new screen that continues showing them the feed from where they left off
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
