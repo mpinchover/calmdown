@@ -1,3 +1,4 @@
+import { useAuth } from "@/app/context/authcontext";
 import { router } from "expo-router";
 import React, {
   useCallback,
@@ -40,6 +41,8 @@ export default function Index() {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const menuOpacity = useRef(new Animated.Value(0)).current; // animated visibility
 
+  const { loginWithEmail, signupWithEmail, loginWithGoogle, user } = useAuth();
+
   // Derived indices/data
   const dataWithLoading = useMemo(
     () => [...items, { id: "loading", type: "loading" }],
@@ -57,7 +60,7 @@ export default function Index() {
   }, [lastRealIndex]);
 
   // UI state
-  const [auth] = useState({ user: "123" }); // TODO replace with firebase auth
+  // const [auth] = useState(); // TODO replace with firebase auth
   // const auth = null;
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -204,7 +207,7 @@ export default function Index() {
     }
 
     // Optional auth gate (unchanged)
-    if (!auth && !pushedModalRef.current) {
+    if (!user && !pushedModalRef.current) {
       pushedModalRef.current = true;
       router.push("/login-modal");
       pushedModalRef.current = false;

@@ -1,4 +1,4 @@
-// import { useAuth } from "@/app/context/authcontext";
+import { useAuth } from "@/app/context/authcontext";
 import { ThemedText } from "@/components/themed-text";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 export default function ModalScreen() {
-  // const { loginWithEmail, signupWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, signupWithEmail, loginWithGoogle } = useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const isLogin = mode === "login";
@@ -20,8 +20,8 @@ export default function ModalScreen() {
       return;
     }
     try {
-      // if (isLogin) await loginWithEmail(email.trim(), password);
-      // else await signupWithEmail(email.trim(), password);
+      if (isLogin) await loginWithEmail(email.trim(), password);
+      else await signupWithEmail(email.trim(), password);
       // router.dismiss();
     } catch (e: any) {
       Alert.alert("Auth error", e?.message ?? "Something went wrong");

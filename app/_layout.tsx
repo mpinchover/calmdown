@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/app/context/authcontext"; // ✅ adjust path if needed
 import {
   DarkTheme,
   DefaultTheme,
@@ -13,41 +14,43 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="login-modal"
-          options={{
-            presentation: "modal",
-            title: "Modal",
+    <AuthProvider>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <Stack
+          screenOptions={{
             headerShown: false,
-            animation: "fade",
-            contentStyle: {
-              backgroundColor: "transparent",
-            },
           }}
-        />
-        <Stack.Screen
-          name="account-modal"
-          options={{
-            presentation: "modal",
-            title: "Modal",
-            headerShown: false,
-            animation: "fade",
-            contentStyle: {
-              backgroundColor: "transparent",
-            },
-          }}
-        />
-        {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="login-modal"
+            options={{
+              presentation: "modal",
+              title: "Modal",
+              headerShown: false,
+              animation: "fade",
+              contentStyle: {
+                backgroundColor: "transparent",
+              },
+            }}
+          />
+          <Stack.Screen
+            name="account-modal"
+            options={{
+              presentation: "modal",
+              title: "Modal",
+              headerShown: false,
+              animation: "fade",
+              contentStyle: {
+                backgroundColor: "transparent",
+              },
+            }}
+          />
+          {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} /> */}
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
