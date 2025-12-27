@@ -1,4 +1,4 @@
-// import { useAuth } from "@/app/context/authcontext";
+import { useAuth } from "@/app/context/authcontext";
 import { ThemedText } from "@/components/themed-text";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
@@ -6,11 +6,10 @@ import React, { useState } from "react";
 import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 export default function AccountModal() {
-  // const { loginWithEmail, signupWithEmail, loginWithGoogle } = useAuth();
-
   // Replace this later with Firebase user email, e.g.:
   // const email = user?.email ?? "";
   const [email] = useState("user@example.com");
+  const { user, logout } = useAuth();
 
   const onSubmit = async () => {
     try {
@@ -45,6 +44,19 @@ export default function AccountModal() {
           placeholderTextColor="rgba(209,213,219,0.6)"
           style={[styles.input, { opacity: 0.7 }]}
         />
+        <Pressable
+          style={styles.logoutBtn}
+          onPress={async () => {
+            try {
+              await logout();
+              router.dismiss();
+            } catch (e: any) {
+              Alert.alert("Error", e?.message ?? "Failed to log out");
+            }
+          }}
+        >
+          <ThemedText style={styles.logoutBtnText}>Log out</ThemedText>
+        </Pressable>
 
         {/* Optional: keep button (currently no-op) or remove it if you want */}
         {/* <Pressable style={styles.primaryBtn} onPress={onSubmit}>
@@ -139,6 +151,20 @@ const styles = StyleSheet.create({
     top: 24,
     right: 24,
     zIndex: 10,
+  },
+  logoutBtn: {
+    height: 48,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(239,68,68,0.6)", // subtle red
+    marginTop: 16,
+  },
+
+  logoutBtnText: {
+    color: "#ef4444",
+    fontWeight: "600",
   },
 
   // closeLink: {
