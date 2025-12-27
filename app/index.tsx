@@ -35,17 +35,18 @@ const MENU_FADE_MS = 180;
 const SCROLL_BACK_MS = 300; // animation timing
 const TAP_SLOP = 8; // pixels
 
-export default function Index() {
+const Feed = ({ items }) => {
   const isFocused = useIsFocused();
   // List data (grows after “fetch”)
-  const [items, setItems] = useState(fakeData);
+  // const [items, setItems] = useState(videos);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const menuOpacity = useRef(new Animated.Value(0)).current; // animated visibility
   const segments = useSegments();
   // Only pause when we lose focus AND it's NOT the login modal
   // @ts-ignore
-  const isLoginModalFocused = segments.includes("login-modalr");
+  const isLoginModalFocused = segments.includes("login-modal");
+  // const shouldAllowPlayback = useAllowPlayback(["login-modal"]);
 
   // ✅ If login modal is open, force pause
   const shouldAllowPlayback = isFocused && !isLoginModalFocused;
@@ -135,7 +136,7 @@ export default function Index() {
       // ✅ screen is focused
 
       return () => {
-        console.log("MAIN SCREEN LOST FOCUS");
+        // console.log("MAIN SCREEN LOST FOCUS");
         // 🔴 screen is blurred (navigated away)
       };
     }, [])
@@ -222,7 +223,7 @@ export default function Index() {
       hasLoadedMoreRef.current = true;
 
       setTimeout(() => {
-        setItems((prev) => [...prev, ...fakeDataAfterLoading]);
+        // setItems((prev) => [...prev, ...fakeDataAfterLoading]);
       }, FAKE_API_MS);
     }
 
@@ -259,7 +260,7 @@ export default function Index() {
     { viewabilityConfig, onViewableItemsChanged },
   ]).current;
 
-  console.log("MAIN SCREEN IS FOCUSED ", isFocused);
+  // console.log("MAIN SCREEN IS FOCUSED ", isFocused);
   const renderItem = useCallback(
     ({ item, index }) => {
       if (item.type === "loading") {
@@ -441,7 +442,24 @@ export default function Index() {
       )}
     </View>
   );
-}
+};
+
+const initialFeedLoggedIn = initialFeed.slice(0, 3);
+const initialFeedLoggedOut = initialFeed.slice(4, 7);
+const loadedVideos = initialFeed.slice(7, 10);
+
+const Main = () => {
+  const { user } = useAuth();
+
+  const items = useMemo(
+    () => (user ? initialFeedLoggedIn : initialFeedLoggedOut),
+    [user]
+  );
+
+  return <Feed items={items} />;
+};
+
+export default Main;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "black", position: "relative" },

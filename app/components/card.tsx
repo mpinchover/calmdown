@@ -19,9 +19,6 @@ export default function Card({
 }) {
   const videoRef = useRef(null);
   const shouldPlay = isActive && isScreenFocused;
-  console.log(
-    `${screen} SHOULD PLAY, ${shouldPlay} is_active ${isActive} isScreenFocused ${isScreenFocused}`
-  );
 
   // reset when leaving
   useEffect(() => {
