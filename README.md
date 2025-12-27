@@ -1,12 +1,16 @@
 # TODO
 
-## remove profile icon if user is not logged in
+## remove profile icon if user is not logged in X
 
-## create another screen for not logged in
+## create another screen for not logged in (welcome screen)
 
 ### if user is not logged in, they see the same intro vids
 
 ### if user is logged in, move to new screen that continues showing them the feed from where they left off
+
+## track id or index that the user last saw
+
+## get rid of pop up after logging in.
 
 # Welcome to your Expo app 👋
 

@@ -1,4 +1,5 @@
 // card-menu.ts
+import { useAuth } from "@/app/context/authcontext";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -10,7 +11,8 @@ import { Animated, Pressable, StyleSheet, View } from "react-native";
 const ICON_SIZE = 24;
 const GAP = 20;
 const PAD = 20;
-const EXTRA_COUNT = 2;
+const EXTRA_COUNT_LOGGED_IN = 2;
+const EXTRA_COUNT_LOGGED_OUT = 1;
 
 const CardMenu = ({
   isMuted,
@@ -23,7 +25,9 @@ const CardMenu = ({
   menuOpacity,
   menuPointerEvents,
 }) => {
+  const { user, logout } = useAuth();
   const t = useRef(new Animated.Value(isMenuOpen ? 1 : 0)).current;
+  const extraCount = user ? EXTRA_COUNT_LOGGED_IN : EXTRA_COUNT_LOGGED_OUT;
 
   useEffect(() => {
     Animated.timing(t, {
@@ -34,7 +38,7 @@ const CardMenu = ({
   }, [isMenuOpen, t]);
 
   const middleFullHeight =
-    2 * GAP + EXTRA_COUNT * ICON_SIZE + (EXTRA_COUNT - 1) * GAP;
+    2 * GAP + extraCount * ICON_SIZE + (extraCount - 1) * GAP;
 
   const closedHeight = PAD * 2 + ICON_SIZE * 2 + GAP;
   const openHeight = closedHeight + middleFullHeight;
@@ -84,16 +88,18 @@ const CardMenu = ({
               <Ionicons name="color-filter" size={ICON_SIZE} color="#d1d5db" />
             </Pressable>
 
-            <Pressable
-              onPress={() => router.push("/account-modal")}
-              hitSlop={12}
-            >
-              <MaterialCommunityIcons
-                name="account"
-                size={ICON_SIZE}
-                color="#d1d5db"
-              />
-            </Pressable>
+            {user && (
+              <Pressable
+                onPress={() => router.push("/account-modal")}
+                hitSlop={12}
+              >
+                <MaterialCommunityIcons
+                  name="account"
+                  size={ICON_SIZE}
+                  color="#d1d5db"
+                />
+              </Pressable>
+            )}
           </View>
         </Animated.View>
 
