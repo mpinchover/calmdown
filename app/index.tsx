@@ -33,7 +33,7 @@ const MENU_FADE_MS = 180;
 const SCROLL_BACK_MS = 300; // animation timing
 const TAP_SLOP = 8; // pixels
 
-export default function MainFeed() {
+export default function Index() {
   // List data (grows after “fetch”)
   const [items, setItems] = useState(fakeData);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -313,6 +313,12 @@ export default function MainFeed() {
       <StatusBar hidden />
 
       <FlatList
+        // initialNumToRender={2}
+        // maxToRenderPerBatch={2}
+        // updateCellsBatchingPeriod={50}
+        // windowSize={3}
+        // removeClippedSubviews={true}
+        // android ^
         ref={listRef}
         data={dataWithLoading}
         keyExtractor={(item) => String(item.id)}

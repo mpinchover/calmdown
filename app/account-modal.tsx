@@ -24,7 +24,7 @@ export default function AccountModal() {
     <View style={styles.container}>
       {/* Close button */}
       <Pressable
-        onPress={() => router.back()}
+        onPress={() => router.dismiss()}
         hitSlop={12}
         style={styles.closeButton}
       >

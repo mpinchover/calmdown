@@ -22,7 +22,7 @@ export default function ModalScreen() {
     try {
       // if (isLogin) await loginWithEmail(email.trim(), password);
       // else await signupWithEmail(email.trim(), password);
-      // router.back();
+      // router.dismiss();
     } catch (e: any) {
       Alert.alert("Auth error", e?.message ?? "Something went wrong");
     }
@@ -43,7 +43,7 @@ export default function ModalScreen() {
     <View style={styles.container}>
       {/* Close button */}
       <Pressable
-        onPress={() => router.back()}
+        onPress={() => router.dismiss()}
         hitSlop={12}
         style={styles.closeButton}
       >
