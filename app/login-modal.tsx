@@ -22,7 +22,7 @@ export default function ModalScreen() {
     try {
       if (isLogin) await loginWithEmail(email.trim(), password);
       else await signupWithEmail(email.trim(), password);
-      // router.dismiss();
+      router.dismiss();
     } catch (e: any) {
       Alert.alert("Auth error", e?.message ?? "Something went wrong");
     }

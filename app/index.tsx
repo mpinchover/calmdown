@@ -27,7 +27,7 @@ const fakeDataAfterLoading = loadedFeed;
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const LOADING_HEIGHT = Math.round(SCREEN_HEIGHT * 0.3);
-const ADVANCE_THRESHOLD = 0.2 * SCREEN_HEIGHT;
+const ADVANCE_THRESHOLD = 0.1 * SCREEN_HEIGHT;
 const FAKE_API_MS = 3000; // ✅ fake “network call”
 const FADE_MS = 180;
 const MENU_FADE_MS = 180;
