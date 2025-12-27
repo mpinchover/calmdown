@@ -214,6 +214,8 @@ export default function Index() {
     }
   };
 
+  console.log("USER IS ", user);
+
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     // Prefer detecting loading first (it can overlap with last full card)
     const loading = viewableItems?.find(
@@ -262,11 +264,6 @@ export default function Index() {
       setIsMenuOpen,
     ]
   );
-
-  const onScreenTap = () => {
-    // setIsMenuOpen((pr
-    setIsMenuVisible((prev) => !prev);
-  };
 
   // Cleanup timer if unmount
   useEffect(() => {
