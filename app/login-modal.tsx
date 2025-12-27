@@ -22,7 +22,9 @@ export default function ModalScreen() {
     try {
       if (isLogin) await loginWithEmail(email.trim(), password);
       else await signupWithEmail(email.trim(), password);
-      router.dismiss();
+      // router.dismiss();
+      // await Audio.setIsEnabledAsync(false);
+      router.replace("/auth-gate/mainfeed");
     } catch (e: any) {
       Alert.alert("Auth error", e?.message ?? "Something went wrong");
     }

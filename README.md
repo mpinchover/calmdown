@@ -12,6 +12,8 @@
 
 ## get rid of pop up after logging in.
 
+## stop all audio playing if we are reloading 
+
 ## signal to user to swipe up?
 
 # Welcome to your Expo app 👋

@@ -49,7 +49,8 @@ export default function AccountModal() {
           onPress={async () => {
             try {
               await logout();
-              router.dismiss();
+              router.replace("/");
+              //   router.dismiss();
             } catch (e: any) {
               Alert.alert("Error", e?.message ?? "Failed to log out");
             }

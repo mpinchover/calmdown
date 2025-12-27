@@ -1,5 +1,6 @@
 import { useAuth } from "@/app/context/authcontext";
-import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { useIsFocused } from "@react-navigation/native";
+
 import { router, useSegments } from "expo-router";
 import React, {
   useCallback,
@@ -17,11 +18,11 @@ import {
   View,
 } from "react-native";
 
-import Card from "./components/card";
-import CardMenu from "./components/card-menu";
-import LoadingCard from "./components/loading-card";
-import initialFeed from "./fakedata/initial-feed.json";
-import loadedFeed from "./fakedata/loaded-feed.json";
+import Card from "../components/card";
+import CardMenu from "../components/card-menu";
+import LoadingCard from "../components/loading-card";
+import initialFeed from "../fakedata/initial-feed.json";
+import loadedFeed from "../fakedata/loaded-feed.json";
 
 const fakeData = initialFeed;
 const fakeDataAfterLoading = loadedFeed;
@@ -42,13 +43,13 @@ export default function Index() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const menuOpacity = useRef(new Animated.Value(0)).current; // animated visibility
-  const segments = useSegments();
-  // Only pause when we lose focus AND it's NOT the login modal
-  // @ts-ignore
-  const isLoginModalFocused = segments.includes("login-modalr");
 
-  // ✅ If login modal is open, force pause
-  const shouldAllowPlayback = isFocused && !isLoginModalFocused;
+  const segments = useSegments();
+
+  // @ts-ignore
+
+  const isAccountModalFocused = segments.includes("account-modal");
+  const shouldAllowPlayback = isFocused || isAccountModalFocused;
 
   const { loginWithEmail, signupWithEmail, loginWithGoogle, user } = useAuth();
 
@@ -129,17 +130,6 @@ export default function Index() {
       });
     });
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      // ✅ screen is focused
-
-      return () => {
-        console.log("MAIN SCREEN LOST FOCUS");
-        // 🔴 screen is blurred (navigated away)
-      };
-    }, [])
-  );
 
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
 
@@ -234,7 +224,7 @@ export default function Index() {
     }
   };
 
-  // console.log("USER IS ", user);
+  console.log("USER IS ", user);
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     // Prefer detecting loading first (it can overlap with last full card)
@@ -259,7 +249,6 @@ export default function Index() {
     { viewabilityConfig, onViewableItemsChanged },
   ]).current;
 
-  console.log("MAIN SCREEN IS FOCUSED ", isFocused);
   const renderItem = useCallback(
     ({ item, index }) => {
       if (item.type === "loading") {
@@ -268,12 +257,12 @@ export default function Index() {
 
       return (
         <Card
+          screen="LoggedIn"
+          isScreenFocused={shouldAllowPlayback}
           url={item.url}
-          screen={"MAIN"}
           isActive={index === activeIndex}
           isMuted={isMuted}
           overlayOpacity={overlayOpacity}
-          isScreenFocused={shouldAllowPlayback}
         />
       );
     },
@@ -285,11 +274,10 @@ export default function Index() {
       overlayOpacity,
       isMenuOpen, // ✅ add
       setIsMenuOpen,
-      isFocused,
       shouldAllowPlayback,
     ]
   );
-
+  console.log("LOGGED IN SCREEN IS FOCUSED ", isFocused);
   // Cleanup timer if unmount
   useEffect(() => {
     return () => {
@@ -326,7 +314,7 @@ export default function Index() {
         // Otherwise toggle:
         // - if hidden -> show
         // - if visible + outside -> hide
-        console.log("TAP (not scroll)");
+        // console.log("TAP (not scroll)");
         // setIsMenuVisible((prev) => !prev);
 
         // // optional: collapse when hiding

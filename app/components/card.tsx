@@ -14,8 +14,14 @@ export default function Card({
   isActive,
   isMuted,
   overlayOpacity, // ✅ animated value from MainFeed
+  isScreenFocused,
+  screen,
 }) {
   const videoRef = useRef(null);
+  const shouldPlay = isActive && isScreenFocused;
+  console.log(
+    `${screen} SHOULD PLAY, ${shouldPlay} is_active ${isActive} isScreenFocused ${isScreenFocused}`
+  );
 
   // reset when leaving
   useEffect(() => {
@@ -36,7 +42,7 @@ export default function Card({
         style={StyleSheet.absoluteFill}
         resizeMode={ResizeMode.COVER}
         isLooping
-        shouldPlay={isActive}
+        shouldPlay={shouldPlay}
         isMuted={!isActive || isMuted}
       />
 
