@@ -8,13 +8,15 @@
 
 ### if user is logged in, move to new screen that continues showing them the feed from where they left off
 
-## track id or index that the user last saw
+## track id or index that the user last saw and continue the feed from there
 
 ## get rid of pop up after logging in.
 
-## stop all audio playing if we are reloading 
+## stop all audio playing if we are reloading
 
 ## signal to user to swipe up?
+
+## keyboard avoiding view?
 
 # Welcome to your Expo app 👋
 
