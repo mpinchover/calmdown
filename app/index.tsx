@@ -35,7 +35,7 @@ const MENU_FADE_MS = 180;
 const SCROLL_BACK_MS = 300; // animation timing
 const TAP_SLOP = 8; // pixels
 
-const Feed = ({ items }) => {
+const Feed = ({ items, fetchFeed }) => {
   const isFocused = useIsFocused();
   // List data (grows after “fetch”)
   // const [items, setItems] = useState(videos);
@@ -198,6 +198,7 @@ const Feed = ({ items }) => {
 
   // ✅ Fake API + append + keep loading visible for 3 seconds, then snap back
   const handleLoadingStateRef = useRef(null);
+
   handleLoadingStateRef.current = () => {
     if (bounceBackLockRef.current) return;
 
@@ -206,7 +207,6 @@ const Feed = ({ items }) => {
 
     const snapBackIndex = lastRealIndexRef.current;
 
-    // ---------- FAST SCROLL BACK (300ms) ----------
     setTimeout(() => {
       listRef.current?.scrollToIndex({
         index: snapBackIndex,
@@ -218,22 +218,24 @@ const Feed = ({ items }) => {
       bounceBackLockRef.current = false;
     }, SCROLL_BACK_MS);
 
-    // ---------- FAKE API CALL (3000ms) ----------
-    if (!hasLoadedMoreRef.current) {
-      hasLoadedMoreRef.current = true;
-
-      setTimeout(() => {
-        // setItems((prev) => [...prev, ...fakeDataAfterLoading]);
-      }, FAKE_API_MS);
-    }
-
-    // Optional auth gate (unchanged)
-    if (!user && !pushedModalRef.current) {
-      pushedModalRef.current = true;
-      router.push("/login-modal");
-      pushedModalRef.current = false;
+    // ✅ load more only if authed
+    if (user) {
+      fetchFeed?.();
+    } else {
+      // not authed -> show login modal like before
+      if (!pushedModalRef.current) {
+        pushedModalRef.current = true;
+        router.push("/login-modal");
+        pushedModalRef.current = false;
+      }
     }
   };
+
+  useEffect(() => {
+    setActiveIndex(0);
+    currentIndexRef.current = 0;
+    listRef.current?.scrollToOffset?.({ offset: 0, animated: false });
+  }, [user]);
 
   // console.log("USER IS ", user);
 
@@ -448,15 +450,40 @@ const initialFeedLoggedIn = initialFeed.slice(0, 3);
 const initialFeedLoggedOut = initialFeed.slice(4, 7);
 const loadedVideos = initialFeed.slice(7, 10);
 
+// TODO - show a feed that is for unauth and one that is for auth.
+// the one for auth allows loading the next batch
 const Main = () => {
   const { user } = useAuth();
 
-  const items = useMemo(
-    () => (user ? initialFeedLoggedIn : initialFeedLoggedOut),
-    [user]
+  const [items, setItems] = useState(
+    user ? initialFeedLoggedIn : initialFeedLoggedOut
   );
 
-  return <Feed items={items} />;
+  // ✅ switch feed when auth changes
+  useEffect(() => {
+    setItems(user ? initialFeedLoggedIn : initialFeedLoggedOut);
+  }, [user]);
+
+  // ✅ only allow "load more" if authed, and avoid double-loading
+  const hasLoadedMoreRef = useRef(false);
+
+  const fetchFeed = useCallback(() => {
+    if (!user) return; // 🔒 not authed -> do nothing
+    if (hasLoadedMoreRef.current) return;
+
+    hasLoadedMoreRef.current = true;
+
+    setTimeout(() => {
+      setItems((prev) => [...prev, ...loadedVideos]);
+    }, FAKE_API_MS);
+  }, [user]);
+
+  // ✅ reset "loaded more" flag when auth flips
+  useEffect(() => {
+    hasLoadedMoreRef.current = false;
+  }, [user]);
+
+  return <Feed fetchFeed={fetchFeed} items={items} />;
 };
 
 export default Main;
