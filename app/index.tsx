@@ -1,4 +1,5 @@
 import { useAuth } from "@/app/context/authcontext";
+import { useAllowPlayback } from "@/hooks/allowplayback";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { router, useSegments } from "expo-router";
 import React, {
@@ -45,11 +46,14 @@ const Feed = ({ items, fetchFeed }) => {
   const segments = useSegments();
   // Only pause when we lose focus AND it's NOT the login modal
   // @ts-ignore
-  const isLoginModalFocused = segments.includes("login-modal");
-  // const shouldAllowPlayback = useAllowPlayback(["login-modal"]);
+  // const isLoginModalFocused = segments.includes("login-modal");
+  const shouldAllowPlayback = useAllowPlayback([
+    "login-modal",
+    "account-modal",
+  ]);
 
   // ✅ If login modal is open, force pause
-  const shouldAllowPlayback = isFocused && !isLoginModalFocused;
+  // const shouldAllowPlayback = isFocused && !isLoginModalFocused;
 
   const { loginWithEmail, signupWithEmail, loginWithGoogle, user } = useAuth();
 
