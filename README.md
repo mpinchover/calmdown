@@ -10,13 +10,15 @@
 
 ## track id or index that the user last saw and continue the feed from there
 
-## get rid of pop up after logging in.
+## get rid of pop up after logging in.X
+ - can't
 
-## stop all audio playing if we are reloading
+## stop all audio playing if we are reloading X
 
 ## signal to user to swipe up?
 
-## keyboard avoiding view?
+## keyboard avoiding view? X
+ - don't need it
 
 # Welcome to your Expo app 👋
 

@@ -3,10 +3,18 @@ import { ThemedText } from "@/components/themed-text";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 
 export default function ModalScreen() {
-  const { loginWithEmail, signupWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, signupWithEmail, loginWithGoogle, loginWithApple } =
+    useAuth();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const isLogin = mode === "login";
@@ -23,8 +31,6 @@ export default function ModalScreen() {
       if (isLogin) await loginWithEmail(email.trim(), password);
       else await signupWithEmail(email.trim(), password);
       router.dismiss();
-      // await Audio.setIsEnabledAsync(false);
-      // router.replace("/auth-gate/mainfeed");
     } catch (e: any) {
       Alert.alert("Auth error", e?.message ?? "Something went wrong");
     }
@@ -32,18 +38,25 @@ export default function ModalScreen() {
 
   const onGoogle = async () => {
     try {
-      // await loginWithGoogle();
-      // The provider effect will sign into Firebase; modal can close when auth state updates,
-      // but simplest is to close immediately after launching prompt.
-      // If you prefer: don't close here; close after user becomes authed.
+      await loginWithGoogle();
+      // optional: you can dismiss after auth state changes instead
+      // router.dismiss();
     } catch (e: any) {
       Alert.alert("Google sign-in error", e?.message ?? "Something went wrong");
     }
   };
 
+  const onApple = async () => {
+    try {
+      await loginWithApple();
+      // optional: router.dismiss();
+    } catch (e: any) {
+      Alert.alert("Apple sign-in error", e?.message ?? "Something went wrong");
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* Close button */}
       <Pressable
         onPress={() => router.dismiss()}
         hitSlop={12}
@@ -64,8 +77,9 @@ export default function ModalScreen() {
           placeholderTextColor="rgba(209,213,219,0.6)"
           autoCapitalize="none"
           autoCorrect={false}
-          keyboardType="email-address"
           style={styles.input}
+          textContentType="none"
+          autoComplete="off"
         />
 
         <TextInput
@@ -75,6 +89,8 @@ export default function ModalScreen() {
           placeholderTextColor="rgba(209,213,219,0.6)"
           secureTextEntry
           style={styles.input}
+          textContentType="none"
+          autoComplete="off"
         />
 
         <Pressable style={styles.primaryBtn} onPress={onSubmit}>
@@ -83,12 +99,27 @@ export default function ModalScreen() {
           </ThemedText>
         </Pressable>
 
-        <Pressable style={styles.googleBtn} onPress={onGoogle}>
-          <ThemedText style={styles.secondaryBtnText}>
-            Continue with Google
-          </ThemedText>
-        </Pressable>
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <ThemedText style={styles.dividerText}>OR</ThemedText>
+          <View style={styles.dividerLine} />
+        </View>
 
+        <View style={styles.oauthGroup}>
+          <Pressable style={styles.oauthBtn} onPress={onGoogle}>
+            <ThemedText style={styles.secondaryBtnText}>
+              Continue with Google
+            </ThemedText>
+          </Pressable>
+
+          {Platform.OS === "ios" && (
+            <Pressable style={styles.oauthBtn} onPress={onApple}>
+              <ThemedText style={styles.secondaryBtnText}>
+                Continue with Apple
+              </ThemedText>
+            </Pressable>
+          )}
+        </View>
         <Pressable
           onPress={() => setMode(isLogin ? "signup" : "login")}
           style={styles.switchRow}
@@ -100,39 +131,20 @@ export default function ModalScreen() {
             {isLogin ? "Sign up" : "Log in"}
           </ThemedText>
         </Pressable>
-
-        {/* <Link href="/" dismissTo style={styles.closeLink}> */}
-        {/* <ThemedText style={styles.linkText}>Close</ThemedText> */}
-        {/* </Link> */}
       </View>
     </View>
   );
 }
 const GREY = "#d1d5db";
-
 const styles = StyleSheet.create({
-  // Semi-transparent backdrop so previous screen shows through
   container: {
     flex: 1,
     justifyContent: "center",
     padding: 20,
     backgroundColor: "rgba(0,0,0,0.8)",
   },
-
-  // Card itself
-  card: {
-    borderRadius: 16,
-    padding: 20,
-    // backgroundColor: "rgba(0,0,0,0.75)",
-    // borderWidth: 1,
-    // borderColor: "rgba(209,213,219,0.18)",
-  },
-
-  title: {
-    marginBottom: 16,
-    color: GREY,
-  },
-
+  card: { borderRadius: 16, padding: 20 },
+  title: { marginBottom: 16, color: GREY },
   input: {
     height: 48,
     borderRadius: 12,
@@ -143,7 +155,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(209,213,219,0.25)",
     color: GREY,
   },
-
   primaryBtn: {
     height: 48,
     borderRadius: 12,
@@ -153,12 +164,7 @@ const styles = StyleSheet.create({
     borderColor: GREY,
     marginTop: 6,
   },
-
-  primaryBtnText: {
-    color: GREY,
-    fontWeight: "600",
-  },
-
+  primaryBtnText: { color: GREY, fontWeight: "600" },
   googleBtn: {
     marginTop: 10,
     height: 48,
@@ -168,34 +174,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(209,213,219,0.25)",
   },
-
-  secondaryBtnText: {
-    color: GREY,
-  },
-
-  switchRow: {
+  secondaryBtnText: { color: GREY },
+  switchRow: { flexDirection: "row", justifyContent: "center", marginTop: 18 },
+  switchText: { color: "rgba(209,213,219,0.7)" },
+  linkText: { color: GREY },
+  closeButton: { position: "absolute", top: 24, right: 24, zIndex: 10 },
+  dividerRow: {
     flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 18,
+  },
+
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(209,213,219,0.25)",
+  },
+
+  dividerText: {
+    marginHorizontal: 10,
+    color: "rgba(209,213,219,0.6)",
+    fontSize: 12,
+  },
+
+  oauthGroup: {
+    rowGap: 10,
+  },
+
+  oauthBtn: {
+    height: 48,
+    borderRadius: 12,
+    alignItems: "center",
     justifyContent: "center",
-    marginTop: 18,
+    borderWidth: 1,
+    borderColor: "rgba(209,213,219,0.25)",
   },
-
-  switchText: {
-    color: "rgba(209,213,219,0.7)",
-  },
-
-  linkText: {
-    color: GREY,
-  },
-  closeButton: {
-    position: "absolute",
-    top: 24,
-    right: 24,
-    zIndex: 10,
-  },
-
-  // closeLink: {
-  //   marginTop: 20,
-  //   alignItems: "center",
-  //   paddingVertical: 8,
-  // },
 });
